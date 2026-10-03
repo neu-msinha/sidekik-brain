@@ -5,7 +5,7 @@
   "description": "Sidekik's judgment layer: pause detector, question planner and Jev decisions",
   "type": "module",
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
   "packageManager": "pnpm@10.34.6",
   "scripts": {
@@ -14,16 +14,21 @@
     "start": "node dist/src/main.js",
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "jev:smoke": "tsx --env-file-if-exists=.env scripts/jev-smoke.ts",
+    "calibrate": "tsx --env-file-if-exists=.env scripts/calibrate.ts"
   },
   "dependencies": {
-    "@sidekik/contracts": "github:heisenberg1804/sidekik-platform#v0.1.0-rc.1",
+    "@anthropic-ai/sdk": "^0.131.0",
+    "@sidekik/contracts": "link:../sidekik-platform",
+    "@supabase/supabase-js": "^2.117.2",
+    "@typesafe-ai/sdk": "^0.6.0",
     "fastify": "^5.12.5",
     "ioredis": "^6.0.0",
     "zod": "^4.6.5"
   },
   "devDependencies": {
-    "@types/node": "^20.19.0",
+    "@types/node": "^22.20.5",
     "tsx": "^4.23.15",
     "typescript": "^5.9.3",
     "vitest": "^4.1.11"

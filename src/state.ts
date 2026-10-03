@@ -1,5 +1,6 @@
 import type {
   Envelope,
+  QType,
   Phase,
   ScreenEvent,
   SessionKind,
@@ -16,6 +17,35 @@ export type RecentScreenEvent = Pick<ScreenEvent, "event_id" | "type" | "field" 
   t_ms: number;
 };
 export type RecentTurn = Pick<TranscriptTurn, "turn_id" | "role" | "text" | "lang"> & { t_ms: number };
+
+/** A drafted question waiting for a pause (DESIGN §3). Ids are `questions.id` UUIDs. */
+export type Candidate = {
+  id: string;
+  text: string;
+  qtype: QType;
+  anchors: string[];
+  created_t_ms: number;
+  /** Record the question is about; it expires when the expert opens another one. */
+  entity_id?: string;
+};
+
+export type AskedQuestion = { question_id: string; text: string; qtype: QType; asked_t_ms: number };
+
+export type CaptureState = {
+  candidates: Candidate[];
+  asked: AskedQuestion[];
+  /** The last ask, until the expert's first reply is handled (D5). */
+  awaitingAnswer?: AskedQuestion;
+  /** A D1+D3 check is in flight. */
+  checking: boolean;
+  /** Session time of the one allowed re-check after a "not yet" (DESIGN §3: wait 1 s, check once more). */
+  recheckAt?: number;
+  /**
+   * After a failed re-check: don't check again until the expert speaks, the screen changes
+   * or a candidate is added (see `holdSignature`). Idle events alone don't release it.
+   */
+  heldAt?: string;
+};
 
 export type SessionState = {
   session_id: string;
@@ -43,11 +73,17 @@ export type SessionState = {
     recent: RecentScreenEvent[];
   };
   turns: RecentTurn[];
+  capture: CaptureState;
 };
 
 /** True while brain should run its own capture loop for this session. */
 export function isCaptureActive(s: SessionState): boolean {
   return s.kind === "capture" && s.phase === "capture" && !s.offRecord;
+}
+
+/** What has to change before a held gate is checked again. */
+export function holdSignature(s: SessionState): string {
+  return `${s.speech.lastUserSpeechEndT ?? -1}|${s.screen.lastChangeT ?? -1}|${s.capture.candidates.length}`;
 }
 
 /** Session time now, projected from the last event by wall-clock elapsed time. */
@@ -114,6 +150,7 @@ export class SessionStore {
         speech: { userSpeaking: false, agentSpeaking: false },
         screen: { recent: [] },
         turns: [],
+        capture: { candidates: [], asked: [], checking: false },
       };
       this.sessions.set(ev.session_id, state);
       return { kind: "created", state };

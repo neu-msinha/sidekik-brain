@@ -29,6 +29,7 @@ beforeAll(async () => {
     SUPABASE_SERVICE_ROLE_KEY: "test",
     SK_INTERNAL_TOKEN: "test-internal-token-1234",
     GATEWAY_INTERNAL_URL: "http://localhost:8080",
+    PERSISTENCE: "memory",
   });
   brain = await startBrain(env, { listen: false, logger: silentLogger() });
 });

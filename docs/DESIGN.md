@@ -126,7 +126,9 @@ Two exceptions to the bands:
 
 ## 6. Env
 
-`PORT, REDIS_URL, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, SK_INTERNAL_TOKEN, TYPESAFE_API_KEY, JEV_MODEL=jev-1.13.0, OPENROUTER_API_KEY, ANTHROPIC_API_KEY, GATEWAY_INTERNAL_URL, JEV_RPS=30, JEV_TPS=80000`
+`PORT, REDIS_URL, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, SK_INTERNAL_TOKEN, TYPESAFE_API_KEY, JEV_MODEL=jev-1.13.0, JEV_TIMEOUT_MS=1500, OPENROUTER_API_KEY, OPENROUTER_JEV_MODEL=typesafe/jev-1.13, ANTHROPIC_API_KEY, LLM_FALLBACK_MODEL=claude-haiku-4-5, PLANNER_MODEL=claude-haiku-4-5, GATEWAY_INTERNAL_URL, JEV_RPS=30, JEV_TPS=80000, PERSISTENCE=supabase|memory, THRESHOLDS_JSON, FAKE_VENDORS=false`
+
+`/internal/decide` returns every question's answer in `DecisionResult.answers` (D6 asks two questions). D3 isn't served there, because it needs brain's own candidate list.
 
 ## 7. Claude Code tickets
 

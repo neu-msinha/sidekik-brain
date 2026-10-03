@@ -1,5 +1,8 @@
 import { internalAuth, type Logger } from "@sidekik/contracts";
 import Fastify, { LogController, type FastifyBaseLogger, type FastifyInstance } from "fastify";
+import { registerDecideRoute } from "./decide/endpoint.js";
+import type { Decider } from "./decide/decider.js";
+import type { SessionDirectory } from "./sessions.js";
 import type { SessionStore } from "./state.js";
 
 export type HealthCheck = () => Promise<boolean>;
@@ -11,6 +14,8 @@ export type ServerDeps = {
   /** Named dependency checks reported by /healthz. */
   checks: Record<string, HealthCheck>;
   logger: Logger;
+  /** Serves POST /internal/decide when set. */
+  decide?: { decider: Decider; sessions: SessionDirectory; budgetMs?: number };
 };
 
 export function buildServer(deps: ServerDeps): FastifyInstance {
@@ -41,6 +46,8 @@ export function buildServer(deps: ServerDeps): FastifyInstance {
         if (!state) return reply.code(404).send({ error: "unknown session" });
         return state;
       });
+
+      if (deps.decide) registerDecideRoute(internal, { ...deps.decide, log: deps.logger });
     },
     { prefix: "/internal" },
   );
