@@ -1,0 +1,31 @@
+{
+  "name": "sidekik-brain",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Sidekik's judgment layer: pause detector, question planner and Jev decisions",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "packageManager": "pnpm@10.34.6",
+  "scripts": {
+    "dev": "tsx watch --env-file-if-exists=.env src/main.ts",
+    "dev:mock": "tsx --env-file-if-exists=.env scripts/dev-mock.ts",
+    "start": "node dist/src/main.js",
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@sidekik/contracts": "github:heisenberg1804/sidekik-platform#v0.1.0-rc.1",
+    "fastify": "^5.12.5",
+    "ioredis": "^6.0.0",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.0",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.11"
+  }
+}
