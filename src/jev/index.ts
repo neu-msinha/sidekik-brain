@@ -26,7 +26,14 @@ export function createJevRouter(env: BrainEnv, deps: { log: Logger; bus?: Bus; s
     : undefined;
   const fallbacks: JevClient[] = [];
   if (env.OPENROUTER_API_KEY && !env.FAKE_VENDORS) {
-    fallbacks.push(new OpenRouterJev({ apiKey: env.OPENROUTER_API_KEY, model: env.OPENROUTER_JEV_MODEL, timeoutMs: env.JEV_TIMEOUT_MS }));
+    fallbacks.push(
+      new OpenRouterJev({
+        apiKey: env.OPENROUTER_API_KEY,
+        model: env.OPENROUTER_JEV_MODEL,
+        timeoutMs: env.JEV_TIMEOUT_MS,
+        url: env.OPENROUTER_DECISIONS_URL,
+      }),
+    );
   }
   if (env.ANTHROPIC_API_KEY && !env.FAKE_VENDORS) {
     fallbacks.push(new LLMDecider({ apiKey: env.ANTHROPIC_API_KEY, model: env.LLM_FALLBACK_MODEL, timeoutMs: LLM_TIMEOUT_MS }));
