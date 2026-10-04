@@ -71,6 +71,8 @@ export type SessionState = {
     lastChangeT?: number;
     lastTypingT?: number;
     recent: RecentScreenEvent[];
+    /** The app on screen reports its own events (source "dom"); from then on those are the truth. */
+    domSeen?: boolean;
   };
   turns: RecentTurn[];
   capture: CaptureState;
@@ -218,6 +220,8 @@ export class SessionStore {
     if (!state) return undefined;
     touch(state, ev.t_ms, wallNowMs);
     const d = ev.data;
+    if (d.source === "dom") state.screen.domSeen = true;
+    if (shadowedByDom(state, ev)) return state;
     if (d.type === "idle") return state;
     state.screen.lastChangeT = ev.t_ms;
     if (d.type === "typing_in_progress") state.screen.lastTypingT = ev.t_ms;
@@ -241,6 +245,15 @@ export class SessionStore {
     pushRecent(state.turns, { turn_id: d.turn_id, role: d.role, text: d.text, lang: d.lang, t_ms: ev.t_ms });
     return state;
   }
+}
+
+/**
+ * Vision misreads an instrumented app (it flips between records, reads "0400 Capex" as a new value), and
+ * each misread would expire candidates and hold the pause gate shut. Once the app has reported its own
+ * events, brain ignores vision for that session.
+ */
+export function shadowedByDom(state: SessionState, ev: Envelope<ScreenEvent>): boolean {
+  return ev.data.source === "vision" && state.screen.domSeen === true;
 }
 
 function touch(state: SessionState, t: number, wallNowMs: number): void {

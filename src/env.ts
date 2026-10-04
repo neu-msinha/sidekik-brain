@@ -1,5 +1,6 @@
 import { BaseServiceEnvSchema, loadEnv } from "@sidekik/contracts";
 import { z } from "zod";
+import { OPENROUTER_DECISIONS_URL } from "./jev/openrouter.js";
 
 const optionalSecret = z
   .string()
@@ -15,6 +16,12 @@ export const BrainEnvSchema = BaseServiceEnvSchema.extend({
   ANTHROPIC_API_KEY: optionalSecret,
   LLM_FALLBACK_MODEL: z.string().min(1).default("claude-haiku-4-5"),
   OPENROUTER_JEV_MODEL: z.string().min(1).default("typesafe/jev-1.13"),
+  /** Decisions API endpoint for the OpenRouter route; any compatible host (e.g. AI/ML API's /v1/decisions). */
+  OPENROUTER_DECISIONS_URL: z
+    .string()
+    .optional()
+    .transform((v) => v || OPENROUTER_DECISIONS_URL)
+    .pipe(z.url()),
   /** Per-call Jev timeout; also the breaker's slow-call threshold (DESIGN §5: 1.5 s). */
   JEV_TIMEOUT_MS: z.coerce.number().int().positive().default(1500),
   /** Claude model that drafts questions and extracts rules (DESIGN §3: Haiku 4.5). */

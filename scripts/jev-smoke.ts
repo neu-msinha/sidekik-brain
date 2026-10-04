@@ -33,7 +33,7 @@ const ask: JevAsk = {
 
 const clients: JevClient[] = [];
 if (env.TYPESAFE_API_KEY) clients.push(new TypeSafeJev({ apiKey: env.TYPESAFE_API_KEY, model: env.JEV_MODEL, timeoutMs: 5000 }));
-if (env.OPENROUTER_API_KEY) clients.push(new OpenRouterJev({ apiKey: env.OPENROUTER_API_KEY, model: env.OPENROUTER_JEV_MODEL, timeoutMs: 5000 }));
+if (env.OPENROUTER_API_KEY) clients.push(new OpenRouterJev({ apiKey: env.OPENROUTER_API_KEY, model: env.OPENROUTER_JEV_MODEL, timeoutMs: 5000, url: env.OPENROUTER_DECISIONS_URL }));
 if (env.ANTHROPIC_API_KEY) clients.push(new LLMDecider({ apiKey: env.ANTHROPIC_API_KEY, model: env.LLM_FALLBACK_MODEL, timeoutMs: 10_000 }));
 if (clients.length === 0) {
   log.error("no provider keys set; fill TYPESAFE_API_KEY, OPENROUTER_API_KEY or ANTHROPIC_API_KEY in .env");
