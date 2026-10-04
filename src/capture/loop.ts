@@ -17,7 +17,7 @@ import type { Thresholds } from "../decide/thresholds.js";
 import { interrupted, pauseGate, type PauseConfig } from "../pause.js";
 import type { PlannerInput, QuestionPlanner } from "../planner.js";
 import { PRICES } from "../jev/pricing.js";
-import { holdSignature, isCaptureActive, nowT, type Candidate, type RecentScreenEvent, type SessionState, type SessionStore } from "../state.js";
+import { holdSignature, isCaptureActive, nowT, shadowedByDom, type Candidate, type RecentScreenEvent, type SessionState, type SessionStore } from "../state.js";
 import type { CaptureRepo } from "./repo.js";
 import type { SessionQueue } from "./queue.js";
 
@@ -77,6 +77,7 @@ export class CaptureLoop {
   // ---- hooks -------------------------------------------------------------
 
   async onScreenEvent(state: SessionState, ev: Envelope<ScreenEvent>): Promise<void> {
+    if (shadowedByDom(state, ev)) return;
     if (ev.data.type === "record_opened" && ev.data.entity) await this.leaveRecord(state, ev.data.entity.id);
     if (!isCaptureActive(state) || !DECISION_EVENTS.has(ev.data.type)) return;
     void this.d.queue.run(state.session_id, () => this.classify(state, ev));
@@ -142,11 +143,19 @@ export class CaptureLoop {
     if (!q) return;
     if (q.band !== "default") await this.d.repo.setEventClass(ev.data.event_id, String(q.answer));
 
-    const cls = q.answer;
-    if ((cls !== "judgment_call" && cls !== "exception_handling") || q.confidence < this.d.thresholds.eventClass || q.band !== "act") {
-      log.debug({ event_class: cls, confidence: q.confidence }, "D2: no candidates");
+    // Both classes spawn candidates, so their probabilities add up: Jev often splits a recode between
+    // judgment_call and exception_handling, and neither alone clears the threshold. Providers without
+    // per-option probabilities (the LLM fallback) count only their top answer.
+    const p = q.probabilities ?? {};
+    const judgment = p.judgment_call ?? (q.answer === "judgment_call" ? q.confidence : 0);
+    const exception = p.exception_handling ?? (q.answer === "exception_handling" ? q.confidence : 0);
+    const worth = judgment + exception;
+    if (worth < this.d.thresholds.eventClass) {
+      log.debug({ event_class: q.answer, confidence: q.confidence, judgment, exception }, "D2: no candidates");
       return;
     }
+    const cls = judgment >= exception ? "judgment_call" : "exception_handling";
+    log.debug({ event_class: cls, worth, top: q.answer, confidence: q.confidence }, "D2: candidates");
     if (!this.d.planner) {
       log.warn("D2 found a judgment call but no planner is configured (ANTHROPIC_API_KEY)");
       return;
